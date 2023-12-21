@@ -659,11 +659,18 @@ def main():
     print('start...')
     calcObs()
     print('begin writing stations')
-    for station in mpccode.keys():
-        if station == 'XXX':
-            continue
-        createGraph(station)
-        print(station)
+    thread_list = []
+    max_threads = 25  # Set the maximum number of threads
+    
+    with concurrent.futures.ThreadPoolExecutor(max_workers=max_threads) as executor:
+        for station in mpccode.keys():
+            if station == 'XXX':
+                continue
+            t = executor.submit(createGraph, station)
+            thread_list.append(t)
+    
+    for thread in thread_list:
+        thread.result()
     #createGraph('J95')
 
 main()
