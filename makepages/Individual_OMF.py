@@ -1,4 +1,5 @@
 import sqlite3, plotly.express as px, pandas as pd, json, numpy as np, datetime
+from plotly.subplots import make_subplots
 
 mpecconn = sqlite3.connect("../mpecwatch_v3.db")
 cursor = mpecconn.cursor()
@@ -50,6 +51,7 @@ def topN(someDictionary, graphTitle, station, includeNA = False):
     
 
     fig1.write_html("../www/byStation/OMF/"+station+"_"+graphTitle.replace(' ', '_')+"{}.html".format(titleNA))
+    return fig1
 
 def time_frequency_figure(station):
     yearly = np.zeros(366)
@@ -94,10 +96,10 @@ def time_frequency_figure(station):
 
 
 N = 10 #Top limit of objects to show individually
-for station in mpccode.keys():
-#for i in range(1):
-    #station = "station_J95"
-    station = "station_" + station
+#for station in mpccode.keys():
+for i in range(1):
+    station = "station_033"
+    #station = "station_" + station
     observers = {}
     measurers = {}
     facilities = {}
@@ -141,11 +143,21 @@ for station in mpccode.keys():
 
     #doesnt include NA:
     try:
-        topN(observers, "Top {} Observers".format(N), station)
-        topN(measurers, "Top {} Measurers".format(N), station)
-        topN(facilities, "Top {} Facilities".format(N), station)
+        fig = make_subplots(rows=1, cols=3)
+
+        fig_obs = topN(observers, "Top {} Observers".format(N), station)
+        fig_meas = topN(measurers, "Top {} Measurers".format(N), station)
+        fig_fac = topN(facilities, "Top {} Facilities".format(N), station)
+
         topN(objects, "Top {} Objects".format(N), station)
         time_frequency_figure(station)
+
+        fig.add_trace(fig_obs, row=1, col=1)
+        fig.add_trace(fig_meas, row=1, col=2)
+        fig.add_trace(fig_fac, row=1, col=3)
+
+        fig.update_layout(title_text=station[-3:] + " " + mpccode[station[-3:]]['name'] + " | " + "Top Observers, Measurers, and Facilities")
+        fig.write_html("../www/byStation/OMF/"+station+"_top_obs_meas_fac.html".replace(' ', '_'))
 
     except Exception as e:
         message = e
