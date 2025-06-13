@@ -1,16 +1,17 @@
 """
 Created on Wed Jul  6 14:49:19 2022
 
-Data is grabbed from obscode_stat.py
-Make sure to run obscode_stat.py first!
+Data is grabbed from obscode_stat.py - make sure to run obscode_stat.py first!
 
 Generates individual station webpages including tables and statistics. 
+
 Graphs are generated in IndividualOMF.py - make sure to run IndividualOMF.py as well!
 """
 
 import concurrent.futures
 import ctypes
 import datetime
+import jinja2
 import json
 import logging
 import multiprocessing
@@ -52,7 +53,7 @@ def encode(num, alphabet=BASE62):
     arr.reverse()
     return ''.join(arr)
 
-# ——— Global container for fuzzy‑built name_map ———
+# ——— Name map stuff ——— #
 name_map = {}
 
 def normalize_name(name: str) -> str:
@@ -115,6 +116,15 @@ def per_person_counts(counts: Counter) -> Counter:
             per_person[name] += cnt
     return per_person
 
+# ——— Jinja2 template setup ——— #
+def to_datetime_filter(ts):
+    return datetime.datetime.fromtimestamp(ts)
+
+template_loader = jinja2.FileSystemLoader(searchpath="./templates/")
+template_env = jinja2.Environment(loader=template_loader)
+template_env.filters['to_datetime'] = to_datetime_filter
+
+# ——— Main code handling station page creation ——— #
 MPEC_TYPES = ["Editorial", "Discovery", "OrbitUpdate", "DOU", "ListUpdate", "Retraction", "Other", "Followup", "FirstFollowup"]
 OBJ_TYPES = ["NEA", "PHA", "Comet", "Satellite", "TNO", "Unusual", "Interstellar", "Unknown"]
 MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
